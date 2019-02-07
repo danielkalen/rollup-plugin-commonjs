@@ -762,7 +762,13 @@ function transformCommonjs(
 		.filter(function (key) { return !blacklist[key]; })
 		.forEach(addExport);
 
-	if (hasEsDefaultExport) ; else if (/__esModule/.test(code)) ;
+	if (hasEsDefaultExport) {
+		var defaultExport = '';
+	} else if (/__esModule/.test(code)) {
+		var defaultExport = "export default " + HELPERS_NAME + ".unwrapExports(" + moduleName + ");";
+	} else {
+		var defaultExport = "export default " + moduleName + ";";
+	}
 
 	var named = namedExportDeclarations
 		.filter(function (x) { return x.name !== 'default' || !hasDefaultExport; })

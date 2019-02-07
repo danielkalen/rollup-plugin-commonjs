@@ -471,11 +471,11 @@ export function transformCommonjs(
 		.forEach(addExport);
 
 	if (hasEsDefaultExport) {
-		const defaultExport = '';
+		var defaultExport = '';
 	} else if (/__esModule/.test(code)) {
-		const defaultExport = `export default ${HELPERS_NAME}.unwrapExports(${moduleName});`;
+		var defaultExport = `export default ${HELPERS_NAME}.unwrapExports(${moduleName});`;
 	} else {
-		const defaultExport = `export default ${moduleName};`;
+		var defaultExport = `export default ${moduleName};`;
 	}
 
 	const named = namedExportDeclarations

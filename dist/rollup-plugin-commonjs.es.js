@@ -884,7 +884,9 @@ function commonjs(options) {
 		transform: function transform(code, id) {
 			var this$1 = this;
 
-			if (!filter(id) || extensions.indexOf(extname(id)) === -1) {
+			var isExcluded = options.exclude && options.exclude.includes && options.exclude.includes(id);
+			
+			if (!filter(id) || isExcluded || extensions.indexOf(extname(id)) === -1) {
 				setIsCjsPromise(id, Promise.resolve(null));
 				return null;
 			}

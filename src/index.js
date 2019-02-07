@@ -94,7 +94,9 @@ export default function commonjs(options = {}) {
 		},
 
 		transform(code, id) {
-			if (!filter(id) || extensions.indexOf(extname(id)) === -1) {
+			const isExcluded = options.exclude && options.exclude.includes && options.exclude.includes(id)
+			
+			if (!filter(id) || isExcluded || extensions.indexOf(extname(id)) === -1) {
 				setIsCjsPromise(id, Promise.resolve(null));
 				return null;
 			}

@@ -362,7 +362,8 @@ function transformCommonjs(
 	customNamedExports,
 	sourceMap,
 	allowDynamicRequire,
-	astCache
+	astCache,
+	hasEsDefaultExport
 ) {
 	var ast = astCache || tryParse(parse, code, id);
 
@@ -765,9 +766,7 @@ function transformCommonjs(
 		.filter(function (key) { return !blacklist[key]; })
 		.forEach(addExport);
 
-	var defaultExport = /__esModule/.test(code)
-		? ("export default " + HELPERS_NAME + ".unwrapExports(" + moduleName + ");")
-		: ("export default " + moduleName + ";");
+	if (hasEsDefaultExport) ; else if (/__esModule/.test(code)) ;
 
 	var named = namedExportDeclarations
 		.filter(function (x) { return x.name !== 'default' || !hasDefaultExport; })
@@ -918,7 +917,8 @@ function commonjs(options) {
 						customNamedExports[id],
 						sourceMap,
 						allowDynamicRequire,
-						ast
+						ast,
+						hasDefaultExport
 					);
 					if (!transformed) {
 						esModulesWithoutDefaultExport[id] = true;

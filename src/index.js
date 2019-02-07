@@ -126,7 +126,8 @@ export default function commonjs(options = {}) {
 						customNamedExports[id],
 						sourceMap,
 						allowDynamicRequire,
-						ast
+						ast,
+						hasDefaultExport
 					);
 					if (!transformed) {
 						esModulesWithoutDefaultExport[id] = true;

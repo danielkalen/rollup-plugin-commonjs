@@ -73,7 +73,8 @@ export function transformCommonjs(
 	customNamedExports,
 	sourceMap,
 	allowDynamicRequire,
-	astCache
+	astCache,
+	hasEsDefaultExport
 ) {
 	const ast = astCache || tryParse(parse, code, id);
 
@@ -469,9 +470,13 @@ export function transformCommonjs(
 		.filter(key => !blacklist[key])
 		.forEach(addExport);
 
-	const defaultExport = /__esModule/.test(code)
-		? `export default ${HELPERS_NAME}.unwrapExports(${moduleName});`
-		: `export default ${moduleName};`;
+	if (hasEsDefaultExport) {
+		const defaultExport = '';
+	} else if (/__esModule/.test(code)) {
+		const defaultExport = `export default ${HELPERS_NAME}.unwrapExports(${moduleName});`;
+	} else {
+		const defaultExport = `export default ${moduleName};`;
+	}
 
 	const named = namedExportDeclarations
 		.filter(x => x.name !== 'default' || !hasDefaultExport)

@@ -1,5 +1,5 @@
 .DS_Store
 node_modules
 .gobble*
-dist
+# dist
 !test/**/node_modules

@@ -102,13 +102,16 @@ export default function commonjs(options = {}) {
 			const transformPromise = entryModuleIdsPromise
 				.then(entryModuleIds => {
 					const { isEsModule, hasDefaultExport, ast } = checkEsModule(this.parse, code, id);
+					const _hasCjsKeywords = hasCjsKeywords(code, ignoreGlobal)
 					if (isEsModule) {
 						(hasDefaultExport ? esModulesWithDefaultExport : esModulesWithoutDefaultExport)[id] = true;
-						return null;
+						if (!_hasCjsKeywords) {
+							return null;
+						}
 					}
 
 					// it is not an ES module but it does not have CJS-specific elements.
-					if (!hasCjsKeywords(code, ignoreGlobal)) {
+					if (!_hasCjsKeywords) {
 						esModulesWithoutDefaultExport[id] = true;
 						return null;
 					}

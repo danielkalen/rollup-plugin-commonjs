@@ -7,6 +7,9 @@ import { getResolveId } from './resolve-id';
 import { checkEsModule, hasCjsKeywords, transformCommonjs } from './transform.js';
 import { getName } from './utils.js';
 
+const esModulesWithoutDefaultExport = Object.create(null);
+const esModulesWithDefaultExport = Object.create(null);
+
 export default function commonjs(options = {}) {
 	const extensions = options.extensions || ['.js'];
 	const filter = createFilter(options.include, options.exclude);
@@ -27,8 +30,6 @@ export default function commonjs(options = {}) {
 		});
 	}
 
-	const esModulesWithoutDefaultExport = Object.create(null);
-	const esModulesWithDefaultExport = Object.create(null);
 	const allowDynamicRequire = !!options.ignore; // TODO maybe this should be configurable?
 
 	const ignoreRequire =

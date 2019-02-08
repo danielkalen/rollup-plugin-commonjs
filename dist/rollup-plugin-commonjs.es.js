@@ -793,6 +793,9 @@ function transformCommonjs(
 	return { code: code, map: map };
 }
 
+var esModulesWithoutDefaultExport = Object.create(null);
+var esModulesWithDefaultExport = Object.create(null);
+
 function commonjs(options) {
 	if ( options === void 0 ) options = {};
 
@@ -815,8 +818,6 @@ function commonjs(options) {
 		});
 	}
 
-	var esModulesWithoutDefaultExport = Object.create(null);
-	var esModulesWithDefaultExport = Object.create(null);
 	var allowDynamicRequire = !!options.ignore; // TODO maybe this should be configurable?
 
 	var ignoreRequire =

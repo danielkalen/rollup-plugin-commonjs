@@ -868,15 +868,14 @@ function commonjs(options) {
 				var name$1 = getName(actualId$1);
 
 				return getIsCjsPromise(actualId$1).then(function (isCjs) {
-					if (isCjs)
+					if (esModulesWithDefaultExport[actualId$1])
+						{ return ("export {default} from " + (JSON.stringify(actualId$1)) + ";"); }
+					else if (isCjs)
 						{ return ("import { __moduleExports } from " + (JSON.stringify(
 							actualId$1
 						)) + "; export default __moduleExports;"); }
 					else if (esModulesWithoutDefaultExport[actualId$1])
 						{ return ("import * as " + name$1 + " from " + (JSON.stringify(actualId$1)) + "; export default " + name$1 + ";"); }
-					else if (esModulesWithDefaultExport[actualId$1]) {
-						return ("export {default} from " + (JSON.stringify(actualId$1)) + ";");
-					}
 					else
 						{ return ("import * as " + name$1 + " from " + (JSON.stringify(
 							actualId$1

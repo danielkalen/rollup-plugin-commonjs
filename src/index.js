@@ -76,15 +76,14 @@ export default function commonjs(options = {}) {
 				const name = getName(actualId);
 
 				return getIsCjsPromise(actualId).then(isCjs => {
-					if (isCjs)
+					if (esModulesWithDefaultExport[actualId])
+						return `export {default} from ${JSON.stringify(actualId)};`;
+					else if (isCjs)
 						return `import { __moduleExports } from ${JSON.stringify(
 							actualId
 						)}; export default __moduleExports;`;
 					else if (esModulesWithoutDefaultExport[actualId])
 						return `import * as ${name} from ${JSON.stringify(actualId)}; export default ${name};`;
-					else if (esModulesWithDefaultExport[actualId]) {
-						return `export {default} from ${JSON.stringify(actualId)};`;
-					}
 					else
 						return `import * as ${name} from ${JSON.stringify(
 							actualId

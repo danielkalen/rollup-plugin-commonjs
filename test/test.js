@@ -62,6 +62,11 @@ async function executeBundle(bundle, { context, exports } = {}) {
 }
 
 const transformContext = {
+	getModuleInfo(id) {
+		return {
+			isEntry: id === 'main.js'
+		};
+	},
 	parse: (input, options) =>
 		acorn.parse(
 			input,
@@ -87,8 +92,7 @@ describe('rollup-plugin-commonjs', () => {
 			}
 
 			(config.solo ? it.only : it)(dir, () => {
-				const { transform, options } = commonjs(config.options);
-				options({ input: 'main.js' });
+				const { transform } = commonjs(config.options);
 
 				const input = fs.readFileSync(`form/${dir}/input.js`, 'utf-8');
 
@@ -100,11 +104,9 @@ describe('rollup-plugin-commonjs', () => {
 				}
 
 				const expected = fs.readFileSync(outputFile, 'utf-8').trim();
-
-				return transform.call(transformContext, input, 'input.js').then(transformed => {
-					const actual = (transformed ? transformed.code : input).trim().replace(/\0/g, '');
-					assert.equal(actual, expected);
-				});
+				const transformed = transform.call(transformContext, input, 'input.js');
+				const actual = (transformed ? transformed.code : input).trim().replace(/\0/g, '_');
+				assert.equal(actual, expected);
 			});
 		});
 	});
@@ -163,27 +165,25 @@ describe('rollup-plugin-commonjs', () => {
 				})
 			);
 
-			await SourceMapConsumer.with(map, null, async smc => {
-				const locator = getLocator(code, { offsetLine: 1 });
+			const smc = new SourceMapConsumer(map);
+			const locator = getLocator(code, { offsetLine: 1 });
 
-				let generatedLoc = locator('42');
-				let loc = smc.originalPositionFor(generatedLoc); // 42
-				assert.equal(loc.source, 'samples/sourcemap/foo.js');
-				assert.equal(loc.line, 1);
-				assert.equal(loc.column, 15);
+			let generatedLoc = locator('42');
+			let loc = smc.originalPositionFor(generatedLoc); // 42
+			assert.equal(loc.source, 'samples/sourcemap/foo.js');
+			assert.equal(loc.line, 1);
+			assert.equal(loc.column, 15);
 
-				generatedLoc = locator('log');
-				loc = smc.originalPositionFor(generatedLoc); // log
-				assert.equal(loc.source, 'samples/sourcemap/main.js');
-				assert.equal(loc.line, 2);
-				assert.equal(loc.column, 8);
-			});
+			generatedLoc = locator('log');
+			loc = smc.originalPositionFor(generatedLoc); // log
+			assert.equal(loc.source, 'samples/sourcemap/main.js');
+			assert.equal(loc.line, 2);
+			assert.equal(loc.column, 8);
 		});
 
-		it('supports an array of multiple entry points for experimentalCodeSplitting', async () => {
+		it('supports an array of multiple entry points', async () => {
 			const bundle = await rollup({
 				input: ['samples/multiple-entry-points/b.js', 'samples/multiple-entry-points/c.js'],
-				experimentalCodeSplitting: true,
 				plugins: [commonjs()]
 			});
 
@@ -202,13 +202,12 @@ describe('rollup-plugin-commonjs', () => {
 			}
 		});
 
-		it('supports an object of multiple entry points as object for experimentalCodeSplitting', async () => {
+		it('supports an object of multiple entry points', async () => {
 			const bundle = await rollup({
 				input: {
 					b: require.resolve('./samples/multiple-entry-points/b.js'),
 					c: require.resolve('./samples/multiple-entry-points/c.js')
 				},
-				experimentalCodeSplitting: true,
 				plugins: [resolve(), commonjs()]
 			});
 
@@ -316,7 +315,7 @@ describe('rollup-plugin-commonjs', () => {
 			const bundle = await rollup({
 				input: 'samples/custom-named-exports/main.js',
 				plugins: [
-					resolve({ main: true }),
+					resolve(),
 					commonjs({
 						namedExports: {
 							'samples/custom-named-exports/secret-named-exporter.js': ['named'],
@@ -329,11 +328,25 @@ describe('rollup-plugin-commonjs', () => {
 			await executeBundle(bundle);
 		});
 
+		it('handles warnings without error when resolving named exports', () => {
+			return rollup({
+				input: 'samples/custom-named-exports-warn-builtins/main.js',
+				plugins: [
+					resolve(),
+					commonjs({
+						namedExports: {
+							events: ['message']
+						}
+					})
+				]
+			});
+		});
+
 		it('ignores false positives with namedExports (#36)', async () => {
 			const bundle = await rollup({
 				input: 'samples/custom-named-exports-false-positive/main.js',
 				plugins: [
-					resolve({ main: true }),
+					resolve(),
 					commonjs({
 						namedExports: {
 							irrelevant: ['lol']
@@ -601,8 +614,13 @@ describe('rollup-plugin-commonjs', () => {
 				plugins: [
 					commonjs(),
 					{
+						resolveId(id) {
+							if (id === '\0virtual' || id === '\0resolved-virtual') {
+								return '\0resolved-virtual';
+							}
+						},
 						load(id) {
-							if (id === '\0virtual') {
+							if (id === '\0resolved-virtual') {
 								return 'export default "Virtual export"';
 							}
 						}
@@ -715,6 +733,38 @@ var esm = /*#__PURE__*/Object.freeze({
 var main = esm;
 
 module.exports = main;
+`
+			);
+		});
+
+		it('handles array destructuring assignment', async () => {
+			const bundle = await rollup({
+				input: 'samples/array-destructuring-assignment/main.js',
+				plugins: [commonjs({ sourceMap: true })]
+			});
+
+			const code = await getCodeFromBundle(bundle);
+			assert.equal(
+				code,
+				`'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+var shuffleArray_1 = shuffleArray;
+
+var main = {
+	shuffleArray: shuffleArray_1
+};
+
+exports.default = main;
+exports.shuffleArray = shuffleArray_1;
 `
 			);
 		});

@@ -365,6 +365,7 @@ function transformCommonjs(parse, code, id, isEntry, ignoreGlobal, ignoreRequire
   };
   let lexicalDepth = 0;
   let programDepth = 0;
+  let shouldSkipGlobalRenaming = true;
   const globals = new Set();
   const HELPERS_NAME = deconflict(scope, globals, 'commonjsHelpers'); // TODO technically wrong since globals isn't populated yet, but ¯\_(ツ)_/¯
 
@@ -488,10 +489,14 @@ function transformCommonjs(parse, code, id, isEntry, ignoreGlobal, ignoreRequire
 
             uses[node.name] = true;
 
-            if (node.name === 'global' && !ignoreGlobal) {
-              magicString.overwrite(node.start, node.end, `${HELPERS_NAME}.commonjsGlobal`, {
-                storeName: true
-              });
+            if (node.name === 'global' && !shouldSkipGlobalRenaming && !ignoreGlobal) {
+              if (parent.type === 'ImportDefaultSpecifier') {
+                shouldSkipGlobalRenaming = true;
+              } else {
+                magicString.overwrite(node.start, node.end, `${HELPERS_NAME}.commonjsGlobal`, {
+                  storeName: true
+                });
+              }
             } // if module or exports are used outside the context of an assignment
             // expression, we need to wrap the module
 

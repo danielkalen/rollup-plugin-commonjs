@@ -92,6 +92,7 @@ export function transformCommonjs(
 
 	let lexicalDepth = 0;
 	let programDepth = 0;
+	let shouldSkipGlobalRenaming = true
 
 	const globals = new Set();
 
@@ -226,10 +227,14 @@ export function transformCommonjs(
 						}
 
 						uses[node.name] = true;
-						if (node.name === 'global' && !ignoreGlobal) {
-							magicString.overwrite(node.start, node.end, `${HELPERS_NAME}.commonjsGlobal`, {
-								storeName: true
-							});
+						if (node.name === 'global' && !shouldSkipGlobalRenaming && !ignoreGlobal) {
+							if (parent.type === 'ImportDefaultSpecifier') {
+								shouldSkipGlobalRenaming = true
+							} else {
+								magicString.overwrite(node.start, node.end, `${HELPERS_NAME}.commonjsGlobal`, {
+									storeName: true
+								});
+							}
 						}
 
 						// if module or exports are used outside the context of an assignment

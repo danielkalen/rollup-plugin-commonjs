@@ -92,7 +92,7 @@ export function transformCommonjs(
 
 	let lexicalDepth = 0;
 	let programDepth = 0;
-	let shouldSkipGlobalRenaming = true
+	let shouldSkipGlobalRenaming = false;
 
 	const globals = new Set();
 

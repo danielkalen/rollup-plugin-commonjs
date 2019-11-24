@@ -361,7 +361,7 @@ function transformCommonjs(parse, code, id, isEntry, ignoreGlobal, ignoreRequire
   };
   let lexicalDepth = 0;
   let programDepth = 0;
-  let shouldSkipGlobalRenaming = true;
+  let shouldSkipGlobalRenaming = false;
   const globals = new Set();
   const HELPERS_NAME = deconflict(scope, globals, 'commonjsHelpers'); // TODO technically wrong since globals isn't populated yet, but ¯\_(ツ)_/¯
 
